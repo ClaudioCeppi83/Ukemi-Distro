@@ -1,0 +1,513 @@
+Para crear una distribución desde cero (o "From Scratch") que sea ligera, potente en multimedia y extremadamente eficiente, no vamos a "instalar" una distro existente, sino a **ensamblarla**.
+
+Aquí tienes la arquitectura técnica definitiva y los pasos para construir este sistema:
+
+---
+
+## 1. La Arquitectura del Sistema
+
+Para que el hardware limitado rinda como uno de gama alta en multimedia, debemos eliminar las capas intermedias innecesarias.
+
+* **Base:** **LFS (Linux From Scratch)** o una estructura **Gentoo** (para compilar con optimizaciones `-march=native`, lo que hace que el software use el 100% de las instrucciones de tu CPU específica).
+* **Kernel:** **Liquorix** o **Zen Kernel**. Ambos están parcheados para reducir la latencia de entrada/salida y dar prioridad a procesos en primer plano (juegos y DAW).
+* **Sistema de Audio:** **PipeWire** con los nodos `pipewire-pulse`, `pipewire-alsa` y `pipewire-jack`. Esto permite que una app de edición profesional y Spotify suenen al mismo tiempo sin latencia.
+* **Gráficos:** **Wayland + Sway**. Wayland elimina el *tearing* (cortes en la imagen) en videos y juegos. Sway, al ser un gestor de ventanas tipo mosaico, consume apenas 150MB de RAM.
+
+---
+
+## 2. Los 5 Pasos de Construcción
+
+### Paso 1: Preparación del Toolchain
+
+Debes crear un entorno de compilación cruzada. Necesitas **GCC**, **Binutils** y **Glibc**. La clave aquí es el "Stripping": eliminar todos los símbolos de depuración de los binarios para que pesen menos y carguen más rápido en RAM.
+
+### Paso 2: Configuración del Kernel Multimedia
+
+Al compilar tu kernel, aplica estas flags de configuración:
+
+* `CONFIG_PREEMPT=y`: Para multitarea en tiempo real.
+* `CONFIG_HZ=1000`: Para una respuesta de audio ultra fluida.
+* Habilita **Zstd** para la compresión de módulos, reduciendo el tiempo de arranque.
+
+### Paso 3: El Userland Eficiente
+
+En lugar de herramientas GNU pesadas, puedes usar **BusyBox** para los comandos básicos del sistema si el equipo es muy limitado, aunque para multimedia lo ideal es mantener GNU pero sin entornos pesados como GNOME o KDE.
+
+* **Gestor de paquetes:** Puedes implementar un sistema simple basado en `RSync` y scripts de Bash para manejar binarios pre-compilados por ti en un servidor externo.
+
+### Paso 4: Optimización Multimedia (Hardware Acceleration)
+
+Instala y configura las librerías **VA-API** y **VDPAU**. Esto es vital: permite que la GPU decodifique el video (H.264, HEVC, AV1) en lugar de la CPU, liberando al procesador para otras tareas.
+
+### Paso 5: Gestión de Memoria Crítica
+
+Configura **zRam** con el algoritmo de compresión `zstd`.
+
+> En lugar de escribir en el disco (lento), el sistema comprime la RAM poco usada. Para un equipo con 4GB de RAM, esto crea un espacio de intercambio virtual de hasta 8GB efectivos sin usar el disco duro.
+
+---
+
+## 3. Stack de Software Seleccionado
+
+Para que tu distro se sienta como una suite profesional nada más arrancar:
+
+| Función | Software | Razón de elección |
+| --- | --- | --- |
+| **Video** | **Kdenlive** | Soporta aceleración por hardware de forma nativa. |
+| **Audio** | **Ardour** | El DAW más eficiente para Linux. |
+| **Juegos** | **Steam (Flatpak)** | Aísla las librerías de juegos del sistema base. |
+| **Motor Gráfico** | **Vulkan** | Obligatorio para rendimiento máximo en juegos modernos y emuladores. |
+
+---
+
+Entendido. Vas a utilizar agentes para automatizar la "fontanería" de la distro. Para que esto funcione con **Antigravity** (el ecosistema de agentes de Google/Gemini), los archivos de contexto deben ser quirúrgicos: deben definir no solo el "qué", sino el "cómo" técnico para que el agente no alucine con soluciones genéricas de Ubuntu.
+
+Aquí tienes los 4 prompts para generar los archivos de contexto `.md` esenciales que guiarán a tus agentes en la creación de esta distro multimedia de alto rendimiento.
+
+---
+
+## 1. Archivo: `01_core_architecture.md`
+
+**Objetivo:** Definir el cimiento del sistema y la cadena de compilación optimizada.
+
+**Prompt para el agente:**
+
+> "Actúa como un Arquitecto de Sistemas Unix. Escribe un archivo de contexto llamado `01_core_architecture.md`. Este archivo debe guiar a un agente de programación para construir la base de una distro basada en los principios de LFS (Linux From Scratch).
+> **Requisitos técnicos a incluir:** > * Uso de un **Kernel Liquorix o Zen** con parches de baja latencia.
+> * Configuración de la Toolchain (GCC/Glibc) con flags `-march=native` y `-O3` para maximizar el rendimiento del hardware específico.
+> * Estándar jerárquico de archivos (FHS).
+> * Instrucciones para el 'stripping' de binarios para reducir el tamaño en disco y memoria."
+> 
+> 
+
+## 2. Archivo: `02_multimedia_stack.md`
+
+**Objetivo:** Configurar el motor de audio y video sin cuellos de botella.
+
+**Prompt para el agente:**
+
+> "Actúa como un Ingeniero de Audio y Video para Linux. Escribe `02_multimedia_stack.md`. Este archivo servirá de guía para implementar el stack multimedia moderno.
+> **Requisitos técnicos a incluir:**
+> * Implementación de **PipeWire** como servidor central (con reemplazos para PulseAudio, ALSA y JACK).
+> * Configuración de nodos de baja latencia (buffer sizes de 128 o 256 por defecto).
+> * Configuración de aceleración por hardware mediante **VA-API** y **VDPAU**.
+> * Listado de codecs críticos (AV1, H.265, VP9) y librerías de soporte para edición (FFmpeg optimizado)."
+> 
+> 
+
+## 3. Archivo: `03_performance_efficiency.md`
+
+**Objetivo:** Hacer que el sistema vuele en hardware antiguo mediante gestión inteligente de recursos.
+
+**Prompt para el agente:**
+
+> "Actúa como un Experto en Optimización de Sistemas. Escribe `03_performance_efficiency.md`. Este archivo debe detallar cómo manejar la escasez de recursos.
+> **Requisitos técnicos a incluir:**
+> * Configuración de **zRam** con algoritmo de compresión `zstd` (relación de compresión objetivo 3:1).
+> * Configuración de **Btrfs** con `compress-force=zstd:3` para acelerar la lectura en discos lentos.
+> * Implementación de un gestor de OOM (Out Of Memory) como `earlyoom` para evitar bloqueos del sistema.
+> * Desactivación de servicios de telemetría y demonios de fondo innecesarios."
+> 
+> 
+
+## 4. Archivo: `04_interface_and_gaming.md`
+
+**Objetivo:** Definir la capa visual y la compatibilidad con juegos.
+
+**Prompt para el agente:**
+
+> "Actúa como un Desarrollador de Interfaces y Sistemas de Gaming. Escribe `04_interface_and_gaming.md`.
+> **Requisitos técnicos a incluir:**
+> * Uso de **Wayland** como protocolo gráfico principal por su eficiencia en el manejo de frames.
+> * Configuración de **Sway** (Tiling Window Manager) para minimizar el consumo de GPU/RAM.
+> * Integración de **Vulkan** como API gráfica prioritaria.
+> * Configuración de **Gamescope** como micro-compositor para ejecutar juegos y apps de video de forma aislada y optimizada."
+> 
+> 
+
+---
+
+### Cómo usar estos archivos con tus agentes:
+
+1. **Generación:** Pasa cada uno de estos prompts a tu IA para obtener los archivos `.md`.
+2. **Inyección:** Cuando le pidas a un agente de código que escriba el script de instalación o compile el kernel, dile: *"Usa como referencia obligatoria los archivos 01_core_architecture.md y 03_performance_efficiency.md"*.
+3. **Validación:** Pide al agente que verifique si su código cumple con la latencia y las flags de compilación definidas en esos documentos.
+
+Al usar **zRam**, la fórmula de memoria efectiva que tus agentes deben manejar es aproximadamente:
+
+$$Memoria_{total} \approx RAM_{física} + (RAM_{zram} \times Ratio_{compresión})$$
+
+Donde el ratio con `zstd` suele ser cercano a **3**.
+
+---
+
+Excelente decisión. Para que tus agentes en **Antigravity** operen con precisión quirúrgica, necesitan reglas de negocio y especificaciones técnicas claras. Aquí tienes el contenido estructurado de cada archivo `.md`.
+
+Copia este contenido en archivos individuales para que sirvan como la "memoria de largo plazo" de tus agentes.
+
+---
+
+### 📄 01_core_architecture.md
+
+**Propósito:** Definir el ADN del sistema y las reglas de compilación.
+
+```markdown
+# Guía de Arquitectura: Core del Sistema
+
+## 1. Identidad
+- **Base:** Estructura LFS (Linux From Scratch) para evitar bloatware.
+- **Kernel:** Zen Kernel o Liquorix (Branch: Stable).
+- **Init System:** OpenRC (por su ligereza y velocidad frente a systemd).
+
+## 2. Reglas de Compilación (Toolchain)
+- **Compilador:** GCC 13+ con soporte para binutils.
+- **Flags Globales:** `-O3 -march=native -pipe -fomit-frame-pointer`.
+- **C-Library:** Glibc (estándar para máxima compatibilidad multimedia).
+- **Stripping:** Es obligatorio ejecutar `strip --strip-unneeded` en todos los binarios finales.
+
+## 3. Kernel Config (Prioridades)
+- Habilitar `CONFIG_HZ=1000`.
+- Habilitar `CONFIG_PREEMPT=y`.
+- Desactivar soporte para hardware legado (disqueteras, drivers de red de los 90).
+- Compilar drivers de GPU (AMDGPU/NVIDIA) como módulos `built-in` si el hardware es conocido.
+
+```
+
+---
+
+### 📄 02_multimedia_stack.md
+
+**Propósito:** Asegurar latencia cero y compatibilidad total de audio/video.
+
+```markdown
+# Guía de Audio y Video: Multimedia Stack
+
+## 1. Servidor de Sonido (PipeWire)
+- **Implementación:** Sustituir ALSA/PulseAudio/JACK mediante `pipewire-pulse` y `pipewire-jack`.
+- **Configuración Pro:** Forzar `default.clock.rate = 48000` y `default.clock.quantum = 128` para minimizar latencia en DAWs.
+- **Librerías:** Instalar `gst-plugins-good`, `gst-plugins-bad`, `gst-plugins-ugly` para soporte universal de codecs.
+
+## 2. Procesamiento de Video
+- **Aceleración:** Implementar `libva` y `mesa-vdpau`.
+- **Backends:** Priorizar Vulkan (`vulkan-icd-loader`) sobre OpenGL siempre que sea posible.
+- **FFmpeg:** Compilar con soporte para `nvenc`, `vaapi` y `v4l2`.
+
+## 3. Renderizado
+- **Color:** Soporte para perfiles ICC vía `colord` para edición fotográfica (GIMP/Darktable).
+
+```
+
+---
+
+### 📄 03_performance_efficiency.md
+
+**Propósito:** Optimización agresiva para hardware limitado.
+
+```markdown
+# Guía de Rendimiento: Optimización de Recursos
+
+## 1. Gestión de Memoria (zRam)
+- **Algoritmo:** `zstd` (Mejor balance compresión/CPU).
+- **Configuración:** Crear dispositivo zRam igual al 100% de la RAM física. 
+- **Swappiness:** Configurar `vm.swappiness = 150` para forzar el uso de zRam antes que el disco.
+
+## 2. Sistema de Archivos
+- **FS:** Btrfs como root.
+- **Mount Flags:** `compress=zstd:3,ssd,noatime,space_cache=v2`.
+- **Limpieza:** Implementar un script de purga automática de logs cada 24h.
+
+## 3. Control de Procesos
+- **OOM Killer:** Configurar `earlyoom` para matar procesos que excedan el 95% de RAM antes de que el sistema se congele.
+- **Prioridad:** Los procesos con tag `multimedia` deben tener un `nice` de -10.
+
+```
+
+---
+
+### 📄 04_interface_and_gaming.md
+
+**Propósito:** Capa visual vanguardista y eficiente.
+
+```markdown
+# Guía de Interfaz: Wayland y Gaming
+
+## 1. Compositor (Sway)
+- **Protocolo:** Wayland nativo (prohibir X11 excepto vía XWayland para apps legadas).
+- **Input:** `libinput` con aceleración de puntero plana para diseño.
+- **Estética:** Usar `waybar` para la barra de tareas y `wofi` como lanzador (mínimo consumo).
+
+## 2. Gaming & Graphics
+- **Tools:** Integrar `MangoHud` para monitoreo de recursos en tiempo real.
+- **Game Optimization:** Implementar `Feral GameMode` para ajustar automáticamente el escalado de CPU al jugar.
+- **Wine/Proton:** Usar `Proton-GE` para máxima compatibilidad con títulos de Windows.
+
+## 3. Visualización de Video
+- **MPV:** Configurar como reproductor por defecto con `vo=gpu` y `hwdec=auto-safe`.
+
+```
+
+---
+
+Absolutamente. Sin un archivo de **especificaciones de ingeniería**, los agentes de Antigravity podrían generar código desordenado o usar herramientas inconsistentes. Necesitas un "Plano Maestro" que defina la estructura del repositorio, el flujo de trabajo y cómo validar que lo que se ha construido realmente funciona.
+
+Este archivo debería ser el **`00_engineering_specs.md`**, ya que es el que dictamina cómo se deben usar los otros cuatro.
+
+---
+
+### 📄 00_engineering_specs.md
+
+**Propósito:** Definir el entorno de desarrollo, la estructura del proyecto y los protocolos de prueba.
+
+```markdown
+# Especificaciones de Ingeniería y Desarrollo
+
+## 1. Stack Tecnológico de Construcción
+| Herramienta | Uso |
+| :--- | :--- |
+| **Python 3.11+** | Orquestador principal y lógica de scripts complejos. |
+| **Bash (ShellCheck)** | Scripts de automatización de bajo nivel y hooks de instalación. |
+| **QEMU / KVM** | Entorno de pruebas para booting y validación de ISO. |
+| **Git** | Control de versiones con ramas `dev` y `stable`. |
+| **Pytest** | Framework para testear la lógica de los scripts de construcción. |
+
+## 2. Estructura del Repositorio
+El agente debe seguir estrictamente esta jerarquía:
+- `/build`: Directorio temporal para compilación.
+- `/configs`: Archivos de configuración (.config de Kernel, dotfiles de Sway).
+- `/core`: Scripts de Python para la orquestación del sistema base (LFS).
+- `/iso`: Herramientas para generar la imagen final (.iso).
+- `/scripts`: Scripts de Bash para tareas rápidas y automatización de paquetes.
+- `/tests`: Pruebas de integración y validación de hardware virtual.
+
+## 3. Protocolo de Pruebas (Validation)
+Antes de marcar un módulo como "Listo", el agente debe verificar:
+1. **Linting:** Los scripts de Bash deben pasar `shellcheck`.
+2. **Kernel Check:** Verificar que `.config` contiene las flags críticas (`PREEMPT_RT`, `HZ_1000`).
+3. **Dry Run:** Simulación de instalación en un entorno `chroot`.
+4. **Boot Test:** El sistema debe arrancar en QEMU con menos de 256MB de RAM asignada.
+
+## 4. Convenciones de Código
+- Documentar cada función en estilo Google (docstrings).
+- Los scripts deben ser modulares (no archivos de 1000 líneas).
+- Manejo estricto de errores: cada comando de compilación debe verificar su `exit code`.
+
+```
+
+---
+
+## ¿Por qué es vital este archivo?
+
+1. **Consistencia de Archivos:** Evita que un agente cree `/scripts` y otro `/tools` para lo mismo.
+2. **Validación Automática:** Permite que un agente actúe como "QA" (Aseguramiento de Calidad) y rechace el código de otro agente si no pasa el linting o no sigue la estructura.
+3. **Eficiencia en el Debugging:** Si algo falla en la compilación del Kernel, el agente sabrá exactamente dónde buscar los logs siguiendo la estructura de `/build`.
+
+---
+
+### Lo que sigue para tus agentes
+
+Con este set de 5 archivos (`00` al `04`), tus agentes ya tienen:
+
+* Las reglas de programación (`00`).
+* La lógica del núcleo (`01`).
+* El motor multimedia (`02`).
+* La estrategia de eficiencia (`03`).
+* La interfaz de usuario (`04`).
+
+---
+
+Para que un agente trabaje en modo autónomo ("Zero-Shot" o "Autonomous Loop") sin supervisión constante, necesitas implementar un sistema de **"Failsafes" (Sistemas de seguridad)** y una arquitectura de **"Doble Verificación"**.
+
+Aquí tienes el plan de blindaje técnico para evitar alucinaciones y desastres en el sistema:
+
+---
+
+## 1. ¿Dónde colocar los archivos de contexto?
+
+Para que los agentes de Antigravity los indexen correctamente, debes seguir una estructura de **Repositorio de Conocimiento**. La mejor práctica es crear una carpeta oculta en la raíz de tu proyecto:
+
+```bash
+mi-distro-multimedia/
+├── .context/               <-- AQUÍ (Archivos .md)
+│   ├── 00_engineering_specs.md
+│   ├── 01_core_architecture.md
+│   ├── ...
+├── .system_prompts/        <-- Prompts que definen la "personalidad" del agente
+├── build/
+└── scripts/
+
+```
+
+**Tip Pro:** En el archivo de configuración de tu agente, define el `base_path` apuntando a `.context/`. Debes indicarle: *"Cualquier acción de código debe ser validada contra las reglas en `/.context/00_engineering_specs.md` antes de ejecutarse"*.
+
+---
+
+## 2. Blindaje contra Alucinaciones (Estrategia de Seguridad)
+
+Para evitar que el agente "invente" comandos o rompa tu sistema anfitrión, implementa estas tres capas:
+
+### A. El "Sandbox" de Construcción (Aislamiento)
+
+**Nunca** permitas que el agente ejecute comandos directamente en tu máquina.
+
+* **Docker/Podman:** Obliga al agente a generar un `Dockerfile` y ejecutar la compilación dentro de un contenedor. Si el agente alucina y borra `/etc`, solo borrará el interior del contenedor.
+* **Chroot Virtual:** Si estás compilando el kernel, usa un entorno de `chroot` controlado.
+
+### B. Agente de Crítica (The Peer Reviewer)
+
+No uses un solo agente. Usa un flujo de **Agente A (Creador)** -> **Agente B (Verificador)**.
+
+* El Agente B tiene una instrucción única: *"Busca errores, alucinaciones y comandos peligrosos en el código del Agente A basándote en los archivos de contexto"*. El código solo se ejecuta si el Agente B da el visto bueno (Check-sum).
+
+### C. Inyección de "Constraints" (Restricciones Negativas)
+
+Añade un archivo llamado `99_negatives.md` con prohibiciones estrictas:
+
+* "Prohibido usar `sudo` dentro de scripts automatizados."
+* "Prohibido descargar binarios de fuentes no oficiales (solo GitHub tags oficiales o kernels.org)."
+* "Si un comando devuelve un error de tipo `command not found`, no intentes adivinar; detén el proceso y genera un log de error."
+
+---
+
+## 3. Protocolo de Ejecución "Antigravity"
+
+Para evitar errores de ejecución, el agente debe seguir este ciclo en cada tarea:
+
+1. **Planificación:** El agente escribe qué va a hacer en un archivo `PLAN.md`.
+2. **Validación de Dependencias:** Antes de compilar, debe ejecutar un script de chequeo (ej. `check_env.sh`) que verifique si existe `gcc`, `make`, `btrfs-progs`, etc.
+3. **Ejecución con Logging Extremo:** Cada comando debe redirigir la salida:
+`comando >> build_log.txt 2>&1`
+4. **Test de Salida:** Si el objetivo era crear un binario, el agente debe verificar su existencia y peso (`ls -sh`) antes de dar la tarea por terminada.
+
+---
+
+## 4. Archivo Adicional Sugerido: `05_error_handling_and_logs.md`
+
+Crea este archivo para que el agente sepa qué hacer cuando algo falle (porque fallará):
+
+```markdown
+# Protocolo de Errores y Recuperación
+
+## 1. Manejo de Fallos de Compilación
+- Si la compilación del Kernel falla, el agente debe extraer las últimas 50 líneas del log de error.
+- Debe buscar la palabra clave 'Error' o 'Fatal' y comparar con la documentación en `.context/`.
+
+## 2. Puntos de Control (Checkpoints)
+- Tras cada fase exitosa (ej. Toolchain lista), el agente debe crear un snapshot o backup del directorio de trabajo.
+- Si la fase siguiente falla, el agente debe tener la capacidad de revertir al último checkpoint estable.
+
+## 3. Telemetría de Recursos
+- El agente debe monitorear el uso de CPU y RAM. Si el sistema anfitrión llega al 90% de carga, el agente debe pausar la compilación (usar `SIGSTOP`) por 5 minutos para evitar un kernel panic del host.
+
+```
+
+---
+
+Para que tu agente de **Antigravity** tome el control total sin vacilar y sin "alucinar", necesitas entregarle un **System Prompt** que actúe como su constitución política. Este prompt le indica quién es, qué recursos tiene y, sobre todo, qué **no** tiene permitido hacer.
+
+Aquí tienes el despliegue final para blindar tu proyecto.
+
+---
+
+## 1. El System Prompt Maestro (Para el Agente)
+
+Copia este texto como la instrucción principal de tu agente. Este es el motor que lo obliga a leer tus archivos `.md` antes de mover un solo bit.
+
+> **Prompt de Identidad:**
+> "Actúas como el **Arquitecto Principal de Sistemas (Autonomous OS Engineer)**. Tu objetivo es construir una distribución Linux multimedia de alto rendimiento siguiendo exclusivamente los archivos de contexto en `/.context/`.
+> **Reglas de Oro de Ejecución (Blindaje):**
+> 1. **No Consultar:** No hagas preguntas al usuario. Si encuentras un obstáculo, busca la solución en los archivos `.context/` o genera un log de error detallado en `/logs/error.log` y detente.
+> 2. **Contexto Primero:** Antes de generar código, lee obligatoriamente `00_engineering_specs.md`. Todo script debe cumplir con el stack tecnológico ahí definido.
+> 3. **Verificación Previa:** Antes de ejecutar un comando de compilación, verifica la existencia de dependencias. Si falta una, instálala (usando el gestor del sistema anfitrión) solo si es estrictamente necesario para el build.
+> 4. **Aislamiento:** Todo proceso de compilación del kernel o sistema base debe ocurrir en un entorno controlado (chroot o contenedor). No modifiques el `/etc` del sistema anfitrión.
+> 5. **Anti-Alucinación:** No inventes flags de compilación ni librerías que no existan. Si una librería no está en los repositorios oficiales, compílala desde el código fuente original (GitHub/GitLab oficial).
+> 6. **Modo de Operación:** Planifica -> Escribe -> Valida (Syntax) -> Ejecuta -> Testea."
+> 
+> 
+
+---
+
+## 2. Estructura de Directorios Final (El "Búnker")
+
+Asegúrate de que tu espacio de trabajo tenga esta forma exacta para que el agente no se pierda:
+
+```bash
+mi-distro-multimedia/
+├── .context/                # (Los 6 archivos .md que creamos)
+├── .agent_memory/           # Donde el agente guarda sus "checkpoints"
+├── build/                   # Espacio de trabajo de compilación (vaciable)
+├── output/                  # Aquí aparecerá tu ISO final y el Kernel
+├── logs/                    # Logs de salida de cada fase
+├── scripts/                 # Scripts generados por el agente
+└── Makefile                 # El orquestador de alto nivel
+
+```
+
+---
+
+## 3. El Script de Orquestación (Wrapper de Seguridad)
+
+Para que el agente no se "escape", te sugiero usar este script de Python como puente. El agente escribirá código, pero este script lo ejecutará con protecciones.
+
+```python
+import os
+import subprocess
+
+class AntigravityOrchestrator:
+    def __init__(self):
+        self.context_path = "./.context/"
+        self.log_path = "./logs/execution.log"
+
+    def run_safe_command(self, command):
+        """Ejecuta comandos capturando errores para evitar panics del agente."""
+        try:
+            print(f"🚀 Ejecutando: {command}")
+            result = subprocess.run(
+                command, shell=True, check=True, 
+                capture_output=True, text=True
+            )
+            with open(self.log_path, "a") as f:
+                f.write(result.stdout)
+            return True
+        except subprocess.CalledProcessError as e:
+            with open("./logs/error.log", "a") as f:
+                f.write(f"❌ FALLO en: {command}\nError: {e.stderr}\n")
+            return False
+
+# El agente usará esta clase para interactuar con el sistema
+
+```
+
+---
+
+## 4. Estrategia de "Test de Humo" Automático
+
+Para que el agente sepa si hizo las cosas bien, incluye una instrucción en su flujo: **"Todo binario generado debe pasar un test de arquitectura"**.
+
+Por ejemplo, si el agente compila el kernel, debe ejecutar automáticamente:
+
+```bash
+file ./output/vmlinuz && grep "CONFIG_PREEMPT=y" ./build/.config
+
+```
+
+Si el comando falla, el agente debe borrar lo hecho y reintentar con una configuración diferente, sin avisarte.
+
+---
+
+## 5. El archivo final de blindaje: `99_critical_limits.md`
+
+Crea este último archivo en `.context/` para poner los límites físicos:
+
+```markdown
+# Límites Críticos de Ejecución
+
+- **Tiempo Máximo de Compilación:** Si un módulo tarda más de 4 horas, abortar y optimizar `-j` (jobs).
+- **Espacio en Disco:** Si el espacio en `/build` baja de 20GB, limpiar caché inmediatamente.
+- **Seguridad:** Prohibido descargar scripts de `curl | sh` de fuentes desconocidas. Solo usar `git clone` de repositorios verificados.
+- **Prioridad Multimedia:** El agente debe verificar que el sistema final no tenga más de 40 procesos en ejecución al arrancar (Idle state).
+
+```
+
+---
+
+

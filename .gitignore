@@ -1,0 +1,22 @@
+# Build and Temp artifacts
+build/
+output/
+logs/*.log
+.agent_memory/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Docker
+.docker_cache/
+
+# System / OS
+.DS_Store
+Thumbs.db
+
+# Context logs
+.context/logs/
