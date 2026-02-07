@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export PATH=$LFS/tools/bin:$PATH
 PKG_NAME="glibc"
 PKG_VERSION="2.38"
 TARBALL="glibc-2.38.tar.xz"

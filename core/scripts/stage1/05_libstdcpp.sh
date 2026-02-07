@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export PATH=$LFS/tools/bin:$PATH
 PKG_NAME="libstdc++"
 PKG_VERSION="13.2.0"
 TARBALL="gcc-13.2.0.tar.xz"

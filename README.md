@@ -1,6 +1,8 @@
 # 🌀 Ukemi Distro
 
-### *The High-Performance Multimedia Linux Distribution from Scratch*
+> **Version: v0.1.0-alpha** (Initial Core Implementation)
+
+## *The High-Performance Multimedia Linux Distribution from Scratch*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![Engine: LFS](https://img.shields.io/badge/Base-LFS-orange.svg)](https://www.linuxfromscratch.org/)

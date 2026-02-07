@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export PATH=$LFS/tools/bin:$PATH
 PKG_NAME="linux-headers"
 # We are using the zen-kernel tag v6.7.4-zen1 based on manifest
 TARBALL="v6.7.4-zen1.tar.gz"

@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     zstd \
     curl \
+    shellcheck \
     && rm -rf /var/lib/apt/lists/*
 
 # Create LFS user and group

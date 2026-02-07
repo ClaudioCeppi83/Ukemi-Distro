@@ -18,14 +18,29 @@ build-env:
 	@bash scripts/enter_env.sh
 
 toolchain-p1:
-	@echo "🔨 Iniciando construcción de la Toolchain (Paso 1) en el Sandbox..."
+	@echo "🔨 Iniciando construcción de la Toolchain (Paso 1) en el Sandbox (as root)..."
 	@docker run -it --rm \
+        -u root \
         -v "$$(pwd)":/mnt/ukemi \
         -w /mnt/ukemi \
         -e LFS=/mnt/ukemi/target \
         -e LFS_TGT=x86_64-lfs-linux-gnu \
+        -e HOST_UID=$$(id -u) \
+        -e HOST_GID=$$(id -g) \
         ukemi-builder \
         python3 core/toolchain_builder.py
+
+validate:
+	@bash scripts/validate_build.sh
+
+setup-multimedia:
+	@bash scripts/setup_multimedia.sh
+
+setup-gaming:
+	@bash scripts/setup_gaming.sh
+
+setup-performance:
+	@bash scripts/setup_performance.sh
 
 clean:
 	@echo "Cleaning build directory..."

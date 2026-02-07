@@ -5,24 +5,24 @@ packages:
   - name: binutils
     version: "2.41"
     url: "https://ftp.gnu.org/gnu/binutils/binutils-2.41.tar.xz"
-    sha256: "ae9a5789e23423f059bc4393ce0a365451966a34cd378d3885f81ca995f70a7b"
+    sha256: "ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450"
 
   - name: gcc
     version: "13.2.0"
     url: "https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz"
-    sha256: "e2751939886367732298c40213b2c6df4f738740c02c0b62e4f0a28f8f2b7b25"
+    sha256: "e275e76442a6067341a27f04c5c6b83d8613144004c0413528863dc6b5c743da"
 
   - name: glibc
     version: "2.38"
     url: "https://ftp.gnu.org/gnu/glibc/glibc-2.38.tar.xz"
-    sha256: "fb92fdb294d1337da09f984841968ed1368940e4f29107d391f1ad7b82218b62"
+    sha256: "fb82998998b2b29965467bc1b69d152e9c307d2cf301c9eafb4555b770ef3fd2"
 
   - name: linux-liquorix
     version: "6.7.x"
     url: "https://github.com/zen-kernel/zen-kernel/archive/refs/tags/v6.7.4-zen1.tar.gz"
-    sha256: "SKIP" # Usaremos SKIP para descargar sin validar por ahora si no tenemos el hash exacto, o buscaremos uno.
+    sha256: "SKIP"
 
   - name: make
     version: "4.4.1"
     url: "https://ftp.gnu.org/gnu/make/make-4.4.1.tar.gz"
-    sha256: "dd16fb1d67bfab792496e1ae33c2e1f2b66bf1c5f3e9b110b64d0be5e656513d"
+    sha256: "dd16fb1d67bfab79a72f5e8390735c49e3e8e70b4945a15ab1f81ddb78658fb3"

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+export PATH=$LFS/tools/bin:$PATH
 PKG_NAME="binutils"
 PKG_VERSION="2.41"
 TARBALL="binutils-2.41.tar.xz"
@@ -19,10 +20,13 @@ cd build
              --target=$LFS_TGT \
              --disable-nls \
              --enable-gprofng=no \
-             --disable-werror
+             --disable-werror \
+             --enable-default-hash-style=gnu \
+             --disable-gprof
 
-make -j$(nproc)
-make install
+make -j4
+sync
+make install || (sleep 2 && sync && make install)
 
 cd /mnt/ukemi/build
 rm -rf binutils-2.41
